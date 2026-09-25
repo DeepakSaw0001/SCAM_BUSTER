@@ -1,0 +1,54 @@
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: scambuster-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: scambuster
+    networks:
+      - scambuster-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: scambuster-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_ENV=development
+      - DATABASE_URL=mongodb://mongodb:27017
+      - DATABASE_NAME=scambuster
+      - CORS_ORIGINS=["http://localhost:5173","http://127.0.0.1:5173"]
+    depends_on:
+      - mongodb
+    networks:
+      - scambuster-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: scambuster-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+    networks:
+      - scambuster-network
+
+volumes:
+  mongodb_data:
+    driver: local
+
+networks:
+  scambuster-network:
+    driver: bridge

@@ -1,32 +1,51 @@
 # Dependencies
 node_modules/
+frontend/node_modules/
+client/node_modules/
+server/node_modules/
 
-# Environment
+# Python Virtual Environments & Cache
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Environment Variables
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
 
-# Build output
+# Build Outputs
+dist/
+build/
+frontend/dist/
 client/dist/
 server/dist/
+
+# Machine Learning Artifacts & Data
+ml/models/
+ml/datasets/raw/
+ml/datasets/processed/
 
 # Logs
 logs/
 *.log
 npm-debug.log*
 
-# OS files
+# OS & Editor Files
 .DS_Store
 Thumbs.db
-
-# IDE
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# MongoDB data (local)
+# Database Data (Docker / local)
 data/db/
+mongodb_data/
 
 # Coverage
 coverage/
