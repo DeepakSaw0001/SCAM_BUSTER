@@ -85,6 +85,23 @@ class HealthResponse(BaseModel):
 
 
 # ── routes ───────────────────────────────────────────────────────────────
+@app.get("/")
+def root():
+    """Root info endpoint."""
+    return {
+        "service": "ScamBuster ML Service",
+        "status": "online",
+        "version": "1.0.0",
+        "documentation": "/docs",
+        "health": "/health",
+        "endpoints": {
+            "health": "GET /health",
+            "predict_text": "POST /predict/text",
+            "predict_url": "POST /predict/url",
+        },
+    }
+
+
 @app.get("/health", response_model=HealthResponse)
 def health():
     """Service liveness and model availability check."""
