@@ -19,15 +19,18 @@ async def connect_to_mongo():
         raise ValueError("DATABASE_URL is not configured.")
 
     try:
-        db.client = AsyncIOMotorClient(
+        client = AsyncIOMotorClient(
             settings.DATABASE_URL,
             serverSelectionTimeoutMS=2000,
         )
-        db.database = db.client[settings.DATABASE_NAME]
         # Verify connection
-        await db.client.admin.command("ping")
+        await client.admin.command("ping")
+        db.client = client
+        db.database = client[settings.DATABASE_NAME]
         logger.info("[DB] Connected to MongoDB at %s (Database: %s)", settings.DATABASE_URL, settings.DATABASE_NAME)
     except Exception as e:
+        db.client = None
+        db.database = None
         logger.warning("[DB] MongoDB not reachable (%s). Backend running in offline/graceful mode.", e)
 
 

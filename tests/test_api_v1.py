@@ -35,5 +35,11 @@ async def test_openapi_docs_available():
 
     assert response.status_code == 200
     data = response.json()
-    assert "paths" in data
     assert "/api/v1/health" in data["paths"]
+    assert "/api/v1/scan/url" in data["paths"]
+    assert "/api/v1/scan/text" in data["paths"]
+    assert "/api/v1/scan/email" in data["paths"]
+    assert "/api/v1/scan/phone" in data["paths"]
+    assert "/api/v1/scan/apk" in data["paths"]
+    assert "/api/v1/scan/history" in data["paths"]
+
