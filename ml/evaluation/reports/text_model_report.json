@@ -1,0 +1,58 @@
+{
+  "model": "TF-IDF + Logistic Regression",
+  "task": "SMS Spam Classification",
+  "dataset": "UCI SMS Spam Collection",
+  "dataset_source": "https://archive.ics.uci.edu/ml/machine-learning-databases/00228/smsspamcollection.zip",
+  "total_samples": 5570,
+  "train_samples": 4456,
+  "test_samples": 1114,
+  "test_size_ratio": 0.2,
+  "tfidf_vocab_size": 5000,
+  "features": "TF-IDF (unigrams + bigrams, max 5000 features)",
+  "algorithm": "LogisticRegression (solver=lbfgs, class_weight=balanced)",
+  "random_state": 42,
+  "metrics": {
+    "accuracy": 0.9793536804308797,
+    "precision": 0.9144736842105263,
+    "recall": 0.9328859060402684,
+    "f1_score": 0.9235880398671097,
+    "confusion_matrix": [
+      [
+        952,
+        13
+      ],
+      [
+        10,
+        139
+      ]
+    ],
+    "classification_report": {
+      "ham": {
+        "precision": 0.9896049896049897,
+        "recall": 0.9865284974093265,
+        "f1-score": 0.9880643487285937,
+        "support": 965.0
+      },
+      "spam": {
+        "precision": 0.9144736842105263,
+        "recall": 0.9328859060402684,
+        "f1-score": 0.9235880398671097,
+        "support": 149.0
+      },
+      "accuracy": 0.9793536804308797,
+      "macro avg": {
+        "precision": 0.952039336907758,
+        "recall": 0.9597072017247974,
+        "f1-score": 0.9558261942978517,
+        "support": 1114.0
+      },
+      "weighted avg": {
+        "precision": 0.9795560089014212,
+        "recall": 0.9793536804308797,
+        "f1-score": 0.9794404977228836,
+        "support": 1114.0
+      }
+    }
+  },
+  "trained_at": "2026-09-25T14:19:46.103161+00:00"
+}

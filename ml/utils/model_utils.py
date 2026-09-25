@@ -37,7 +37,7 @@ def save_artifact(obj, filename: str) -> Path:
     """Save a sklearn model / vectorizer to ml/models/<filename>."""
     path = MODELS_DIR / filename
     joblib.dump(obj, path)
-    print(f"[✓] Saved artifact → {path}")
+    print(f"[OK] Saved artifact -> {path}")
     return path
 
 
@@ -69,7 +69,7 @@ def full_evaluation(y_true, y_pred, labels=None, target_names=None):
 def print_evaluation(metrics: dict, model_name: str = "Model"):
     """Pretty-print evaluation metrics to the console."""
     print(f"\n{'=' * 60}")
-    print(f"  Evaluation — {model_name}")
+    print(f"  Evaluation -- {model_name}")
     print(f"{'=' * 60}")
     print(f"  Accuracy  : {metrics['accuracy']:.4f}")
     print(f"  Precision : {metrics['precision']:.4f}")
@@ -86,5 +86,5 @@ def save_report(report: dict, filename: str) -> Path:
     path = REPORTS_DIR / filename
     with open(path, "w", encoding="utf-8") as f:
         json.dump(report, f, indent=2, default=str)
-    print(f"[✓] Report saved → {path}")
+    print(f"[OK] Report saved -> {path}")
     return path

@@ -1,0 +1,94 @@
+{
+  "model": "URL Features + Random Forest",
+  "task": "Phishing URL Classification",
+  "dataset": "Combined public phishing URL sources",
+  "total_samples": 3600,
+  "train_samples": 2880,
+  "test_samples": 720,
+  "test_size_ratio": 0.2,
+  "num_features": 17,
+  "feature_names": [
+    "url_length",
+    "hostname_length",
+    "path_length",
+    "num_dots",
+    "num_subdomains",
+    "num_digits",
+    "num_special_chars",
+    "has_at_symbol",
+    "has_ip_address",
+    "is_https",
+    "num_hyphens",
+    "num_query_params",
+    "path_depth",
+    "has_double_slash_redirect",
+    "num_suspicious_keywords",
+    "digit_ratio",
+    "entropy"
+  ],
+  "feature_importances": {
+    "url_length": 0.16387124774638467,
+    "hostname_length": 0.013403520070913303,
+    "path_length": 0.3281770783946923,
+    "num_dots": 0.11642359398758305,
+    "num_subdomains": 0.03218012762961701,
+    "num_digits": 0.05826994510241414,
+    "num_special_chars": 0.0066676018505607325,
+    "has_at_symbol": 0.0,
+    "has_ip_address": 0.017199502054679038,
+    "is_https": 0.004326970746985644,
+    "num_hyphens": 0.00224945391473528,
+    "num_query_params": 0.00019675109999855393,
+    "path_depth": 0.19347334374126013,
+    "has_double_slash_redirect": 0.0,
+    "num_suspicious_keywords": 4.7997369249724175e-05,
+    "digit_ratio": 0.053641254166708154,
+    "entropy": 0.0098716121242183
+  },
+  "algorithm": "RandomForestClassifier (n_estimators=100, max_depth=20, class_weight=balanced)",
+  "random_state": 42,
+  "metrics": {
+    "accuracy": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1_score": 1.0,
+    "confusion_matrix": [
+      [
+        360,
+        0
+      ],
+      [
+        0,
+        360
+      ]
+    ],
+    "classification_report": {
+      "benign": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 360.0
+      },
+      "malicious": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 360.0
+      },
+      "accuracy": 1.0,
+      "macro avg": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 720.0
+      },
+      "weighted avg": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 720.0
+      }
+    }
+  },
+  "trained_at": "2026-09-25T14:24:23.702897+00:00"
+}

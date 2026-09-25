@@ -1,0 +1,48 @@
+{
+  "model": "URL Features + Random Forest",
+  "task": "Phishing URL Classification (re-evaluation)",
+  "test_samples": 720,
+  "metrics": {
+    "accuracy": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1_score": 1.0,
+    "confusion_matrix": [
+      [
+        360,
+        0
+      ],
+      [
+        0,
+        360
+      ]
+    ],
+    "classification_report": {
+      "benign": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 360.0
+      },
+      "malicious": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 360.0
+      },
+      "accuracy": 1.0,
+      "macro avg": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 720.0
+      },
+      "weighted avg": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 720.0
+      }
+    }
+  }
+}

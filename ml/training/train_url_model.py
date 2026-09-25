@@ -70,21 +70,21 @@ def download_dataset() -> pd.DataFrame:
     label: 1 = malicious/phishing, 0 = benign/legitimate
     """
     if RAW_CSV.exists():
-        print(f"[i] Raw dataset already exists at {RAW_CSV}")
+        print(f"[INFO] Raw dataset already exists at {RAW_CSV}")
         return _load_raw_csv(RAW_CSV)
 
     # Try each source
     for source_url in DATASET_URLS:
-        print(f"[↓] Trying to download from: {source_url}")
+        print(f"[DOWNLOADING] Trying to download from: {source_url}")
         try:
             resp = requests.get(source_url, timeout=120)
             resp.raise_for_status()
             RAW_CSV.parent.mkdir(parents=True, exist_ok=True)
             RAW_CSV.write_bytes(resp.content)
-            print(f"[✓] Downloaded → {RAW_CSV}")
+            print(f"[OK] Downloaded -> {RAW_CSV}")
             return _load_raw_csv(RAW_CSV)
         except Exception as e:
-            print(f"[✗] Failed: {e}")
+            print(f"[ERROR] Failed: {e}")
             continue
 
     # If no download works, try to generate a dataset from PhishTank + legitimate sources
@@ -165,37 +165,63 @@ def _normalise_labels(series: pd.Series) -> pd.Series:
     return s.map(mapping)
 
 
+import zipfile
+
 def _build_dataset_from_public_lists() -> pd.DataFrame:
     """
     Build a URL dataset by combining:
-      - Known phishing URLs from OpenPhish (community feed)
-      - Legitimate URLs from the Tranco top-sites list
+      - Known phishing/malicious URLs from OpenPhish community feed + abuse.ch URLhaus
+      - Legitimate URLs from the official Tranco top-1M list
     """
     phishing_urls = []
     legit_urls = []
 
-    # ── phishing URLs from OpenPhish community feed ──
-    print("[↓] Fetching phishing URLs from OpenPhish community feed...")
+    # ── 1. phishing URLs from OpenPhish community feed ──
+    print("[DOWNLOADING] Fetching phishing URLs from OpenPhish community feed...")
     try:
         resp = requests.get("https://openphish.com/feed.txt", timeout=60)
         resp.raise_for_status()
-        phishing_urls = [
+        op_urls = [
             u.strip() for u in resp.text.strip().split("\n")
             if u.strip() and u.strip().startswith("http")
         ]
-        print(f"[✓] Got {len(phishing_urls)} phishing URLs from OpenPhish")
+        phishing_urls.extend(op_urls)
+        print(f"[OK] Got {len(op_urls)} phishing URLs from OpenPhish")
     except Exception as e:
-        print(f"[✗] OpenPhish failed: {e}")
+        print(f"[ERROR] OpenPhish failed: {e}")
 
-    # ── legitimate URLs from Tranco top-1M list ──
-    print("[↓] Fetching legitimate URLs from Tranco top-sites list...")
+    # ── 2. malicious URLs from URLhaus (abuse.ch) ──
+    print("[DOWNLOADING] Fetching malicious URLs from abuse.ch URLhaus...")
     try:
-        resp = requests.get("https://tranco-list.eu/download/JXQ64/1000000", timeout=120)
-        if resp.status_code != 200:
-            # Try alternate: top sites list
-            resp = requests.get("https://raw.githubusercontent.com/prdx23/tranco-top-sites/main/tranco_top_1k.csv", timeout=60)
+        resp = requests.get("https://urlhaus.abuse.ch/downloads/csv_recent/", timeout=60)
         resp.raise_for_status()
         reader = csv.reader(io.StringIO(resp.text))
+        uh_count = 0
+        for row in reader:
+            if not row or row[0].startswith("#") or len(row) < 3:
+                continue
+            url_val = row[2].strip()
+            if url_val.startswith("http"):
+                phishing_urls.append(url_val)
+                uh_count += 1
+                if uh_count >= 1500:  # Cap at 1500 for balance
+                    break
+        print(f"[OK] Got {uh_count} malicious URLs from URLhaus")
+    except Exception as e:
+        print(f"[ERROR] URLhaus failed: {e}")
+
+    # Deduplicate phishing URLs
+    phishing_urls = list(dict.fromkeys(phishing_urls))
+
+    # ── 3. legitimate URLs from Tranco top-1M list ──
+    print("[DOWNLOADING] Fetching legitimate URLs from Tranco top-sites list...")
+    try:
+        resp = requests.get("https://tranco-list.eu/top-1m.csv.zip", timeout=120)
+        resp.raise_for_status()
+        zf = zipfile.ZipFile(io.BytesIO(resp.content))
+        csv_filename = zf.namelist()[0]
+        content_text = zf.read(csv_filename).decode("utf-8", errors="ignore")
+        reader = csv.reader(io.StringIO(content_text))
         for row in reader:
             if len(row) >= 2:
                 domain = row[1].strip()
@@ -204,15 +230,16 @@ def _build_dataset_from_public_lists() -> pd.DataFrame:
             elif len(row) == 1 and row[0].strip():
                 legit_urls.append(f"https://{row[0].strip()}")
 
-        # Take up to 5000 legitimate URLs for balance
-        legit_urls = legit_urls[:5000]
-        print(f"[✓] Got {len(legit_urls)} legitimate URLs from Tranco")
+            if len(legit_urls) >= len(phishing_urls):
+                break
+
+        print(f"[OK] Got {len(legit_urls)} legitimate URLs from Tranco")
     except Exception as e:
-        print(f"[✗] Tranco failed: {e}")
+        print(f"[ERROR] Tranco failed: {e}")
 
     if len(phishing_urls) < 100 or len(legit_urls) < 100:
         print("\n" + "=" * 60)
-        print("  ⚠  DATASET DOWNLOAD FAILED")
+        print("  [!] DATASET DOWNLOAD FAILED")
         print("=" * 60)
         print("  Could not obtain enough URLs from public sources.")
         print("  Please manually place a CSV file at:")
@@ -239,7 +266,7 @@ def _build_dataset_from_public_lists() -> pd.DataFrame:
     # Save for future runs
     RAW_CSV.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(RAW_CSV, index=False)
-    print(f"[✓] Built dataset ({len(df)} URLs) → {RAW_CSV}")
+    print(f"[OK] Built dataset ({len(df)} URLs) -> {RAW_CSV}")
 
     return df
 
@@ -247,7 +274,7 @@ def _build_dataset_from_public_lists() -> pd.DataFrame:
 # ── feature extraction ───────────────────────────────────────────────────
 def extract_features_df(df: pd.DataFrame) -> pd.DataFrame:
     """Extract URL features for every row and return a features DataFrame."""
-    print(f"[…] Extracting {len(FEATURE_NAMES)} features from {len(df)} URLs …")
+    print(f"[...] Extracting {len(FEATURE_NAMES)} features from {len(df)} URLs ...")
     records = []
     for url in df["url"]:
         records.append(extract_url_features(url))
@@ -257,10 +284,10 @@ def extract_features_df(df: pd.DataFrame) -> pd.DataFrame:
 
 # ── train ────────────────────────────────────────────────────────────────
 def train():
-    """Full training pipeline: download → extract features → RF → save."""
+    """Full training pipeline: download -> extract features -> RF -> save."""
     df = download_dataset()
 
-    print(f"\n[i] Dataset size      : {len(df)}")
+    print(f"\n[INFO] Dataset size      : {len(df)}")
     print(f"    Benign (0)        : {(df['label'] == 0).sum()}")
     print(f"    Malicious (1)     : {(df['label'] == 1).sum()}")
 
@@ -272,7 +299,7 @@ def train():
     processed = pd.concat([X_df, df[["url", "label"]].reset_index(drop=True)], axis=1)
     PROCESSED_CSV.parent.mkdir(parents=True, exist_ok=True)
     processed.to_csv(PROCESSED_CSV, index=False)
-    print(f"[✓] Processed features saved → {PROCESSED_CSV}")
+    print(f"[OK] Processed features saved -> {PROCESSED_CSV}")
 
     X = X_df.values
 
@@ -332,7 +359,7 @@ def train():
     }
     save_report(report, "url_model_report.json")
 
-    print("[✓] URL model training complete.\n")
+    print("[OK] URL model training complete.\n")
     return metrics
 
 

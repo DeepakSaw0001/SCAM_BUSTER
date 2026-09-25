@@ -34,7 +34,7 @@ def evaluate():
     """Re-evaluate the saved URL model on the test split."""
     csv_path = DATASETS_PROCESSED / "url_features_clean.csv"
     if not csv_path.exists():
-        print("[✗] Processed dataset not found. Run training first:")
+        print("[ERROR] Processed dataset not found. Run training first:")
         print("    python -m training.train_url_model")
         sys.exit(1)
 

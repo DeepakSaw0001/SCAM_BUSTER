@@ -9,10 +9,11 @@ __pycache__/
 *$py.class
 
 # Model artifacts (large binary files)
-models/*.joblib
+models/
 
-# Raw datasets (downloaded at training time)
+# Raw and processed datasets (generated at training time)
 datasets/raw/
+datasets/processed/
 
 # Distribution / packaging
 *.egg-info/

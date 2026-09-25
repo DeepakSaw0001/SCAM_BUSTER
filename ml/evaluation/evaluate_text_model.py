@@ -36,7 +36,7 @@ def evaluate():
     # Load processed dataset
     csv_path = DATASETS_PROCESSED / "sms_spam_clean.csv"
     if not csv_path.exists():
-        print("[✗] Processed dataset not found. Run training first:")
+        print("[ERROR] Processed dataset not found. Run training first:")
         print("    python -m training.train_text_model")
         sys.exit(1)
 

@@ -61,31 +61,31 @@ TEST_SIZE = 0.20
 def download_dataset():
     """Download the UCI SMS Spam Collection zip if not already present."""
     if RAW_TSV.exists():
-        print(f"[i] Raw dataset already exists at {RAW_TSV}")
+        print(f"[INFO] Raw dataset already exists at {RAW_TSV}")
         return
 
-    print(f"[↓] Downloading UCI SMS Spam Collection …")
+    print(f"[DOWNLOADING] Downloading UCI SMS Spam Collection ...")
     resp = requests.get(DATASET_URL, timeout=120)
     resp.raise_for_status()
 
     RAW_ZIP.parent.mkdir(parents=True, exist_ok=True)
     RAW_ZIP.write_bytes(resp.content)
-    print(f"[✓] Saved zip → {RAW_ZIP}")
+    print(f"[OK] Saved zip -> {RAW_ZIP}")
 
     # Extract
     with zipfile.ZipFile(RAW_ZIP, "r") as zf:
         zf.extractall(DATASETS_RAW)
-    print(f"[✓] Extracted → {DATASETS_RAW}")
+    print(f"[OK] Extracted -> {DATASETS_RAW}")
 
 
 # ── load & clean ─────────────────────────────────────────────────────────
 def load_and_preprocess() -> pd.DataFrame:
     """Load the raw TSV, clean the text, and cache to CSV."""
     if PROCESSED_CSV.exists():
-        print(f"[i] Loading cached processed data → {PROCESSED_CSV}")
+        print(f"[INFO] Loading cached processed data -> {PROCESSED_CSV}")
         return pd.read_csv(PROCESSED_CSV)
 
-    print("[…] Loading raw dataset and preprocessing …")
+    print("[...] Loading raw dataset and preprocessing ...")
     df = pd.read_csv(
         RAW_TSV,
         sep="\t",
@@ -103,20 +103,20 @@ def load_and_preprocess() -> pd.DataFrame:
 
     PROCESSED_CSV.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(PROCESSED_CSV, index=False)
-    print(f"[✓] Processed data saved → {PROCESSED_CSV}")
+    print(f"[OK] Processed data saved -> {PROCESSED_CSV}")
     return df
 
 
 # ── train ────────────────────────────────────────────────────────────────
 def train():
-    """Full training pipeline: download → preprocess → TF-IDF → LR → save."""
+    """Full training pipeline: download -> preprocess -> TF-IDF -> LR -> save."""
     download_dataset()
     df = load_and_preprocess()
 
     X = df["clean_message"]
     y = df["label_enc"]
 
-    print(f"\n[i] Dataset size : {len(df)}")
+    print(f"\n[INFO] Dataset size : {len(df)}")
     print(f"    Ham (0)      : {(y == 0).sum()}")
     print(f"    Spam (1)     : {(y == 1).sum()}")
 
@@ -174,7 +174,7 @@ def train():
     }
     save_report(report, "text_model_report.json")
 
-    print("[✓] Text model training complete.\n")
+    print("[OK] Text model training complete.\n")
     return metrics
 
 

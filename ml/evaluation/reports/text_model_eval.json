@@ -1,0 +1,48 @@
+{
+  "model": "TF-IDF + Logistic Regression",
+  "task": "SMS Spam Classification (re-evaluation)",
+  "test_samples": 1114,
+  "metrics": {
+    "accuracy": 0.9793536804308797,
+    "precision": 0.9144736842105263,
+    "recall": 0.9328859060402684,
+    "f1_score": 0.9235880398671097,
+    "confusion_matrix": [
+      [
+        952,
+        13
+      ],
+      [
+        10,
+        139
+      ]
+    ],
+    "classification_report": {
+      "ham": {
+        "precision": 0.9896049896049897,
+        "recall": 0.9865284974093265,
+        "f1-score": 0.9880643487285937,
+        "support": 965.0
+      },
+      "spam": {
+        "precision": 0.9144736842105263,
+        "recall": 0.9328859060402684,
+        "f1-score": 0.9235880398671097,
+        "support": 149.0
+      },
+      "accuracy": 0.9793536804308797,
+      "macro avg": {
+        "precision": 0.952039336907758,
+        "recall": 0.9597072017247974,
+        "f1-score": 0.9558261942978517,
+        "support": 1114.0
+      },
+      "weighted avg": {
+        "precision": 0.9795560089014212,
+        "recall": 0.9793536804308797,
+        "f1-score": 0.9794404977228836,
+        "support": 1114.0
+      }
+    }
+  }
+}
