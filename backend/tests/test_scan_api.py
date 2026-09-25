@@ -17,12 +17,36 @@ async def test_scan_url_endpoint():
     assert res.status_code == 200
     data = res.json()
     assert data["scan_type"] == "url"
+    assert data["input_type"] == "url"
+    assert data["status"] == "completed"
     assert data["target"] == payload["url"]
+    assert "risk_score" in data
     assert "composite_risk_score" in data
-    assert data["risk_level"] in ("SAFE", "SUSPICIOUS", "DANGEROUS")
+    assert data["risk_score"] >= 40
+    assert "category" in data
+    assert isinstance(data["category"], list)
+    assert "confidence" in data
+    assert data["confidence"] > 0
+    assert data["model_version"] == "rules-v1"
     assert "indicators" in data
-    assert "recommendations" in data
-    assert data["ml_metadata"] is not None
+    assert "recommendation" in data
+
+
+@pytest.mark.asyncio
+async def test_scan_url_validation_rejections():
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        # 1. Unsupported scheme
+        res = await client.post("/api/v1/scan/url", json={"url": "javascript:alert('xss')"})
+        assert res.status_code == 422
+
+        # 2. FTP scheme
+        res_ftp = await client.post("/api/v1/scan/url", json={"url": "ftp://files.server.com/malware.exe"})
+        assert res_ftp.status_code == 422
+
+        # 3. Empty URL
+        res_empty = await client.post("/api/v1/scan/url", json={"url": ""})
+        assert res_empty.status_code == 422
 
 
 @pytest.mark.asyncio

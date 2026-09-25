@@ -8,141 +8,125 @@
 - Suspicious phone numbers & toll-fraud patterns
 - Malicious Android APKs & abnormal permission profiles
 
-ScamBuster operates on a hybrid architecture combining rule-based cybersecurity heuristic analyzers with genuine supervised machine learning pipelines and a risk fusion engine.
+ScamBuster operates on a hybrid architecture combining rule-based cybersecurity heuristic analyzers with supervised machine learning pipelines and an explainable risk engine.
 
 ---
 
-## Architecture
+## Phase 02: URL Scanner & Risk Engine Foundation
 
-The project is structured as a monorepo:
-
+Phase 02 establishes ScamBuster's first complete vertical detection slice:
 ```text
-User Input
-    ↓
-Frontend (React + TypeScript + Vite + Tailwind CSS)
-    ↓
-Backend API (Python FastAPI + Pydantic)
-    ↓
-ML Subsystem (TF-IDF NLP + Logistic Regression & URL Structural Random Forest)
-    ↓
-Cybersecurity Heuristic Analyzers & Risk Fusion Engine
-    ↓
-MongoDB Persistence Layer
+User Input → Frontend URL Scanner → FastAPI → URL Validation → URL Normalization → URL Feature Extraction → Rule-Based Detection Engine → Risk Engine → Explainable Result → Frontend Display
 ```
 
-### Monorepo Structure
+> **Note on Architecture:** Hybrid architecture prepared; current URL detector uses rule-based analysis (`model_version: "rules-v1"`). Machine learning classification models are planned separately and will consume the identical structured feature extraction pipeline.
+
+### API Endpoint: `POST /api/v1/scan/url`
+
+**Request:**
+```json
+{
+  "url": "http://192.168.1.1/paypal/login.php?update=true"
+}
+```
+
+**Response:**
+```json
+{
+  "scan_id": "6142c400-08e4-4b28-987e-aed716e4c1f6",
+  "input_type": "url",
+  "status": "completed",
+  "target": "http://192.168.1.1/paypal/login.php?update=true",
+  "risk_score": 80,
+  "risk_level": "CRITICAL",
+  "category": [
+    "potential_phishing",
+    "credential_harvesting",
+    "suspicious_infrastructure",
+    "unencrypted_transport"
+  ],
+  "confidence": 0.82,
+  "summary": "Multiple suspicious URL indicators were detected (IP-based Hostname, Suspicious Keyword Pattern, Unencrypted HTTP Transport). The structure indicates elevated risk consistent with phishing or deceptive redirection.",
+  "indicators": [
+    {
+      "name": "IP-based Hostname",
+      "severity": "HIGH",
+      "description": "The URL uses a raw IP address instead of a registered domain name, common in phishing and command-and-control infrastructure.",
+      "evidence": "Hostname: 192.168.1.1",
+      "rule_id": "RULE_IP_HOSTNAME"
+    },
+    {
+      "name": "Suspicious Keyword Pattern",
+      "severity": "HIGH",
+      "description": "The URL contains a cluster of credential and urgency-related keywords frequently leveraged in credential harvesting portals.",
+      "evidence": "Matched keywords: login, update",
+      "rule_id": "RULE_KEYWORD_PATTERN"
+    },
+    {
+      "name": "Unencrypted HTTP Transport",
+      "severity": "LOW",
+      "description": "The URL uses unencrypted HTTP instead of HTTPS. While not inherently malicious, it allows traffic eavesdropping and credential interception.",
+      "evidence": "Protocol scheme: http://",
+      "rule_id": "RULE_UNENCRYPTED_HTTP"
+    }
+  ],
+  "recommendation": "Avoid entering passwords, OTPs, or payment information. Do not download or execute any files from this address.",
+  "model_version": "rules-v1",
+  "created_at": "2026-09-25T16:35:09.633797Z"
+}
+```
+
+### Security & Limitations (Phase 02)
+- **Zero SSRF (Static Lexical Only):** To prevent Server-Side Request Forgery (SSRF) and avoid interacting with untrusted infrastructure, the scanner performs purely static lexical and structural analysis. It does **NOT** issue outbound HTTP requests (`requests.get`) to the analyzed URL.
+- **Strict Scheme Validation:** Only `http://` and `https://` schemes are accepted. Pseudo-schemes (`javascript:`, `data:`, `file:`, `ftp:`) are strictly rejected with HTTP 422.
+- **Provisional Scoring Scale:** Risk scores (0–100) are provisional heuristic weights designed to combine multiple independent signals without false confidence. They will be statistically calibrated in future ML validation phases.
+
+---
+
+## Monorepo Layout
 
 ```text
 ScamBuster/
 │
-├── frontend/                   # React + TypeScript + Vite + Tailwind CSS
+├── frontend/                   # React 18 + TypeScript + Vite + Tailwind CSS
 │   ├── src/
-│   │   ├── components/         # Reusable UI components (BackendStatus, Navbar)
-│   │   ├── pages/              # Placeholder pages (Home, Scan, Dashboard, History, etc.)
-│   │   ├── services/           # Typed API service clients
-│   │   ├── hooks/              # Custom React hooks (useBackendHealth)
-│   │   ├── utils/              # UI utilities
+│   │   ├── components/         # Reusable UI components (ScanResultCard, Navbar)
+│   │   ├── pages/              # Scanner Hub, ScanUrl, History, Dashboard
+│   │   ├── services/           # Typed API service client
 │   │   └── App.tsx             # Application router
 │   ├── package.json
-│   ├── tsconfig.json
 │   └── Dockerfile
 │
 ├── backend/                    # Python FastAPI Backend
 │   ├── app/
 │   │   ├── main.py             # FastAPI entrypoint with CORS & lifespan
-│   │   ├── api/v1/             # Versioned REST endpoints (/api/v1/health)
-│   │   ├── config/             # Pydantic BaseSettings configuration
-│   │   ├── database/           # Async MongoDB connection via Motor
-│   │   ├── schemas/            # Pydantic request / response schemas
-│   │   ├── services/           # Business logic layer
-│   │   ├── security/           # CORS & security baseline
-│   │   ├── risk_engine/        # Multi-vector risk fusion engine
-│   │   └── ml/                 # ML inference client
-│   ├── tests/                  # Pytest test suite
+│   │   ├── api/v1/             # Versioned REST endpoints (/api/v1/scan/url)
+│   │   ├── services/           # Dedicated validator, normalizer, feature extractor, rules
+│   │   │   ├── url_validator.py
+│   │   │   ├── url_normalizer.py
+│   │   │   ├── url_feature_extractor.py
+│   │   │   └── url_rule_detector.py
+│   │   ├── risk_engine/        # Modular risk scoring, categories, explanations
+│   │   │   ├── scorer.py
+│   │   │   ├── categories.py
+│   │   │   └── explanations.py
+│   │   ├── database/           # Async MongoDB connection via Motor & scan repository
+│   │   └── schemas/            # Pydantic request / response schemas
+│   ├── tests/                  # Pytest test suite (56 tests)
 │   ├── requirements.txt
 │   └── Dockerfile
 │
-├── ml/                         # Dedicated Machine Learning Subsystem
-│   ├── datasets/               # Public datasets (raw & processed)
-│   ├── preprocessing/          # Text cleaner & URL structural parser
-│   ├── features/               # TF-IDF vectorizer & 17 URL feature extractors
-│   ├── training/               # Supervised training pipelines
-│   ├── evaluation/             # Metrics calculation & test evaluation
-│   ├── inference/              # Stateless prediction modules
-│   ├── models/                 # Saved model artifacts (.joblib)
-│   └── api/                    # Independent FastAPI ML inference service
+├── ml/                         # Machine Learning Subsystem
+│   ├── datasets/               # Public datasets
+│   ├── features/               # Feature extraction vectors
+│   ├── models/                 # Model artifacts (.joblib)
+│   └── inference/              # Inference modules
 │
 ├── docs/                       # Architecture & design documentation
 ├── tests/                      # Integration test suites
 ├── docker-compose.yml          # Container orchestration (Frontend, Backend, MongoDB)
 ├── .env.example                # Environment template
-├── .gitignore
-├── README.md
 └── SCAMBUSTER_MASTER_SPEC.md   # Single source of truth specification
-```
-
----
-
-## Requirements
-
-- **Node.js** >= 18.x
-- **Python** >= 3.10 (Tested on Python 3.14)
-- **MongoDB** >= 6.0 (or Docker)
-- **Docker & Docker Compose** (Optional for containerized execution)
-
----
-
-## Local Development
-
-### 1. Environment Configuration
-Copy the template environment file:
-```bash
-cp .env.example .env
-```
-
-### 2. Run MongoDB
-Start a local MongoDB instance or run via Docker:
-```bash
-docker run -d -p 27017:27017 --name scambuster-mongo mongo:7.0
-```
-
-### 3. Run Backend (FastAPI)
-```bash
-cd backend
-python -m venv .venv
-# On Windows:
-.venv\Scripts\activate
-# On Linux/macOS:
-source .venv/bin/activate
-
-pip install -r requirements.txt
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-```
-- API Base URL: `http://localhost:8000`
-- Base Health: `http://localhost:8000/api/v1/health`
-- Swagger Docs: `http://localhost:8000/docs`
-
-### 4. Run Frontend (React + Vite + Tailwind)
-```bash
-cd frontend
-npm install
-npm run dev
-```
-- Frontend UI: `http://localhost:5173`
-
----
-
-## Docker Development
-
-To run the entire platform (Frontend, Backend, MongoDB) using Docker Compose:
-
-```bash
-docker compose up --build
-```
-
-To stop all services:
-```bash
-docker compose down
 ```
 
 ---
@@ -171,4 +155,3 @@ pytest tests/test_api_v1.py -v
 | `DATABASE_NAME` | Target MongoDB database | `scambuster` |
 | `JWT_SECRET` | Secret key for JWT signing | Minimum 32 characters |
 | `CORS_ORIGINS` | JSON list of allowed origins | `["http://localhost:5173"]` |
-| `VITE_API_URL` | Backend API URL for frontend client | `http://localhost:8000` |

@@ -43,12 +43,99 @@ router = APIRouter(prefix="/scan", tags=["scans"])
 
 @router.post("/url", response_model=ScanResultResponse, status_code=status.HTTP_200_OK)
 async def scan_url_endpoint(request: UrlScanRequest) -> ScanResultResponse:
-    """Analyze a URL using heuristic cybersecurity inspection and Random Forest ML."""
-    heuristic_res = analyze_url(request.url)
-    ml_res = analyze_url_ml(request.url)
-    fused = fuse_risk_analysis("url", request.url, heuristic_res, ml_res)
-    await save_scan_result(fused)
-    return fused
+    """
+    Execute Phase 02 URL detection pipeline:
+    Validation -> Normalization -> Feature Extraction -> Rule Detection -> Risk Engine -> Explainable Result.
+    Purely static/lexical analysis — no outbound requests (zero SSRF).
+    """
+    import uuid
+    from datetime import datetime, timezone
+    from app.services.url_validator import validate_url
+    from app.services.url_normalizer import normalize_url
+    from app.services.url_feature_extractor import extract_url_features
+    from app.services.url_rule_detector import evaluate_url_rules
+    from app.risk_engine.scorer import calculate_risk_score, MODEL_VERSION
+    from app.risk_engine.categories import determine_categories
+    from app.risk_engine.explanations import (
+        generate_summary,
+        generate_recommendation,
+        generate_reasons,
+    )
+    from app.schemas.scan import ThreatIndicator
+
+    # 1. Validation
+    is_valid, validation_error = validate_url(request.url)
+    if not is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=validation_error or "Invalid URL input provided."
+        )
+
+    # 2. Normalization
+    norm = normalize_url(request.url)
+
+    # 3. Feature Extraction
+    features = extract_url_features(request.url, norm)
+
+    # 4. Rule-Based Detection
+    findings = evaluate_url_rules(request.url, norm, features)
+
+    # 5. Risk Engine
+    risk_score, risk_level, confidence = calculate_risk_score(findings)
+    categories = determine_categories(findings)
+    summary = generate_summary(risk_level, findings, norm.normalized_url)
+    recommendation = generate_recommendation(risk_level, findings)
+    reasons = generate_reasons(findings)
+
+    # 6. Format Threat Indicators
+    indicators = [
+        ThreatIndicator(
+            name=f.name,
+            severity=f.severity.upper(),
+            description=f.description,
+            evidence=f.evidence,
+            rule_id=f.rule_id,
+        )
+        for f in findings
+    ]
+
+    scan_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc)
+
+    result = ScanResultResponse(
+        id=scan_id,
+        scan_id=scan_id,
+        scan_type="url",
+        input_type="url",
+        status="completed",
+        target=norm.original_url,
+        timestamp=now,
+        created_at=now,
+        composite_risk_score=risk_score,
+        risk_score=risk_score,
+        risk_level=risk_level.upper(),
+        category=categories,
+        confidence=confidence,
+        summary=summary,
+        heuristic_score=risk_score,
+        indicators=indicators,
+        recommendation=recommendation,
+        recommendations=[recommendation],
+        reasons=reasons,
+        model_version=MODEL_VERSION,
+        normalized_url=norm.normalized_url,
+        features=features.model_dump(),
+        technical_details={
+            "hostname": norm.hostname,
+            "port": norm.port,
+            "scheme": norm.scheme,
+            "is_ip": norm.is_ip,
+            "features": features.model_dump(),
+        },
+    )
+
+    await save_scan_result(result)
+    return result
 
 
 @router.post("/text", response_model=ScanResultResponse, status_code=status.HTTP_200_OK)

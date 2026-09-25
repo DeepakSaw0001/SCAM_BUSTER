@@ -26,15 +26,27 @@ export interface MLMetadata {
 
 export interface ScanResult {
   id: string;
-  scan_type: 'url' | 'text' | 'email' | 'phone' | 'apk';
+  scan_id?: string;
+  scan_type: 'url' | 'text' | 'email' | 'phone' | 'apk' | string;
+  input_type?: string;
+  status?: string;
   target: string;
   timestamp: string;
+  created_at?: string;
   composite_risk_score: number;
-  risk_level: 'SAFE' | 'SUSPICIOUS' | 'DANGEROUS';
+  risk_score?: number;
+  risk_level: string;
+  category?: string[];
+  confidence?: number;
   summary: string;
-  heuristic_score: number;
+  heuristic_score?: number;
   indicators: ThreatIndicator[];
+  recommendation?: string;
   recommendations: string[];
+  reasons?: string[];
+  model_version?: string;
+  normalized_url?: string;
+  features?: Record<string, any>;
   ml_metadata?: MLMetadata;
   technical_details?: Record<string, any>;
 }
