@@ -1,0 +1,103 @@
+{
+  "model_name": "apk_classifier",
+  "version": "1.0",
+  "algorithm": "Logistic_Regression",
+  "feature_version": "apk-feature-v1",
+  "features": [
+    "package_name_length",
+    "total_permission_count",
+    "dangerous_permission_count",
+    "special_permission_count",
+    "has_sms_permission",
+    "has_accessibility_permission",
+    "has_overlay_permission",
+    "has_install_packages_permission",
+    "has_device_admin_permission",
+    "has_surveillance_cluster",
+    "has_banking_overlay_cluster",
+    "activity_count",
+    "service_count",
+    "receiver_count",
+    "provider_count",
+    "exported_component_count",
+    "dex_count",
+    "total_dex_size_kb",
+    "has_dynamic_loading",
+    "has_reflection",
+    "has_command_execution",
+    "native_library_count",
+    "is_debug_certificate",
+    "embedded_url_count",
+    "suspicious_url_count",
+    "file_size_kb"
+  ],
+  "training_dataset": "apk_corpus_clean.csv",
+  "sample_count": 3600,
+  "train_samples": 2880,
+  "test_samples": 720,
+  "trained_at": "2026-09-26T07:22:21.439106+00:00",
+  "random_state": 42,
+  "test_metrics": {
+    "model_name": "Logistic_Regression",
+    "accuracy": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1_score": 1.0,
+    "roc_auc": 1.0,
+    "false_positive_rate": 0.0,
+    "false_negative_rate": 0.0,
+    "confusion_matrix": [
+      [
+        400,
+        0
+      ],
+      [
+        0,
+        320
+      ]
+    ]
+  },
+  "all_model_evaluations": {
+    "Logistic_Regression": {
+      "model_name": "Logistic_Regression",
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "roc_auc": 1.0,
+      "false_positive_rate": 0.0,
+      "false_negative_rate": 0.0,
+      "confusion_matrix": [
+        [
+          400,
+          0
+        ],
+        [
+          0,
+          320
+        ]
+      ]
+    },
+    "Random_Forest": {
+      "model_name": "Random_Forest",
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "roc_auc": 1.0,
+      "false_positive_rate": 0.0,
+      "false_negative_rate": 0.0,
+      "confusion_matrix": [
+        [
+          400,
+          0
+        ],
+        [
+          0,
+          320
+        ]
+      ]
+    }
+  },
+  "top_features": []
+}

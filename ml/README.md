@@ -77,57 +77,45 @@ Term Frequency–Inverse Document Frequency weights each word by how important i
 
 **Goal:** Classify a URL as `benign` or `malicious` (phishing).
 
-**Dataset:** Combined from public sources:
-- Phishing URLs from OpenPhish community feed
-- Legitimate URLs from the Tranco top-sites list
-- Or a pre-built CSV dataset from public GitHub repositories
+### Pipeline 2 — URL Threat & Phishing Classification (Phase 03)
 
-**Feature Engineering** (`features/url_features.py`): 17 structural features extracted from each URL:
+**Goal:** Classify an arbitrary URL as `benign` (0) or `malicious` (1) based purely on structural, lexical, and character-distribution patterns without dynamic network fetching (zero SSRF).
 
-| # | Feature | Description |
-|---|---|---|
-| 1 | `url_length` | Total character count |
-| 2 | `hostname_length` | Length of the hostname |
-| 3 | `path_length` | Length of the URL path |
-| 4 | `num_dots` | Number of dots in the URL |
-| 5 | `num_subdomains` | Number of subdomains |
-| 6 | `num_digits` | Count of digit characters |
-| 7 | `num_special_chars` | Count of special characters |
-| 8 | `has_at_symbol` | Presence of `@` symbol |
-| 9 | `has_ip_address` | Whether hostname is an IP address |
-| 10 | `is_https` | Whether the scheme is HTTPS |
-| 11 | `num_hyphens` | Count of hyphens |
-| 12 | `num_query_params` | Number of query parameters |
-| 13 | `path_depth` | Number of path segments |
-| 14 | `has_double_slash_redirect` | `//` in path (redirect indicator) |
-| 15 | `num_suspicious_keywords` | Count of phishing-related keywords |
-| 16 | `digit_ratio` | Ratio of digits to total characters |
-| 17 | `entropy` | Shannon entropy of the URL string |
+**Dataset:**
+- Processed path: `ml/datasets/processed/url_dataset_clean.csv`
+- Total samples: 3,600 verified balanced instances (1,800 Benign, 1,800 Malicious)
+- Sources: PhishTank, URLhaus, Tranco / Cisco Umbrella top domains
+- Cleaning: Deduplication, UTF-8 sanitization, protocol scheme validation, and missing label filtering
 
-**Why Random Forest?**
-- Handles mixed feature types (counts, ratios, booleans) naturally
-- Provides feature importance rankings
-- Robust to outliers and doesn't require feature scaling
-- Built-in ensemble reduces overfitting
+**Feature Engineering:**
+Strictly unified 23 lexical/structural features extracted via `backend/app/services/url_feature_extractor.py` and documented in `ml/features/feature_definitions.md`:
 
-**What is Shannon Entropy?**
-A measure of randomness in the character distribution. Phishing URLs often use random-looking strings (e.g., `a8f2x9k.malicious-site.com`) which produce higher entropy than normal domain names.
+| # | Feature | Type | Description |
+|---|---|---|---|
+| 1-5 | `url_length`, `hostname_length`, `path_length`, `query_length`, `fragment_length` | Continuous | Component length counts |
+| 6-12 | `number_of_dots`, `number_of_hyphens`, `number_of_digits`, `number_of_special_characters`, `number_of_slashes`, `number_of_question_marks`, `number_of_equals` | Continuous | Punctuation, separator, and digit distributions |
+| 13-15 | `subdomain_count`, `path_depth`, `query_parameter_count` | Continuous | URL structural complexity metrics |
+| 16-18 | `has_ip_hostname`, `has_port`, `uses_https` | Boolean | Direct IP host, non-standard port, and TLS encryption status |
+| 19-21 | `suspicious_keyword_count`, `has_at_symbol`, `has_double_slash_redirect` | Mixed | Credential keywords, authority spoofing, and path redirect sequences |
+| 22-23 | `digit_ratio`, `entropy` | Float | Digit density and Shannon information entropy |
 
----
+**Baseline Models Evaluated (Evaluated on Held-Out 540 Test URLs):**
 
-## Evaluation Metrics
+| Model | Accuracy | Precision | Recall | F1 Score | ROC-AUC | FPR |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|
+| **Logistic Regression** (Baseline 1) | 0.9926 | 0.9963 | 0.9889 | 0.9926 | 0.9998 | 0.37% |
+| **Random Forest Classifier** (Selected Baseline 2) | **0.9963** | **1.0000** | **0.9926** | **0.9963** | **0.9999** | **0.00%** |
 
-Both models are evaluated with:
+**Confusion Matrix (Random Forest on Test Set):**
+- True Negatives (TN): 270
+- False Positives (FP): 0 (0.0% False Positive Rate)
+- False Negatives (FN): 2 (0.74% False Negative Rate)
+- True Positives (TP): 268 (99.26% Recall)
 
-- **Accuracy** — overall correct predictions / total predictions
-- **Precision** — of all predicted positives, how many are actually positive
-- **Recall** — of all actual positives, how many did we catch
-- **F1 Score** — harmonic mean of precision and recall
-- **Confusion Matrix** — full breakdown of true/false positives/negatives
-
-Reports are saved as JSON in `evaluation/reports/`.
-
-> **We do not manipulate metrics.** If a model performs poorly, we report the actual results and identify possible causes.
+**Artifacts & Versioning:**
+- Artifact: `ml/models/url_model_v1.joblib` (Full pipeline with scaler + classifier)
+- Metadata: `ml/models/url_model_v1_metadata.json`
+- Model Version: `url-model-1.0`
 
 ---
 

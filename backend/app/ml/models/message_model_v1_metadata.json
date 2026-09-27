@@ -1,0 +1,42 @@
+{
+  "model_name": "message_classifier",
+  "model_version": "message-model-1.0",
+  "algorithm": "CalibratedLinearSVC",
+  "algorithm_description": "TF-IDF + Calibrated LinearSVC",
+  "feature_method": "tfidf_unigram_bigram",
+  "tfidf_config": {
+    "ngram_range": [
+      1,
+      2
+    ],
+    "min_df": 2,
+    "max_df": 0.95,
+    "sublinear_tf": true,
+    "max_features": 5000
+  },
+  "training_dataset": "sms_spam_clean.csv",
+  "dataset_source": "UCI SMS Spam Collection",
+  "raw_total_samples": 5572,
+  "raw_duplicates_removed": 403,
+  "clean_samples": 5167,
+  "train_samples": 3616,
+  "val_samples": 775,
+  "test_samples": 776,
+  "random_state": 42,
+  "test_metrics": {
+    "accuracy": 0.982,
+    "precision": 0.9773,
+    "recall": 0.8776,
+    "f1_score": 0.9247,
+    "roc_auc": 0.9846,
+    "false_positive_rate": 0.0029,
+    "false_negative_rate": 0.1224,
+    "confusion_matrix": {
+      "true_negatives": 676,
+      "false_positives": 2,
+      "false_negatives": 12,
+      "true_positives": 86
+    }
+  },
+  "trained_at": "2026-09-25T17:19:40.369657+00:00"
+}

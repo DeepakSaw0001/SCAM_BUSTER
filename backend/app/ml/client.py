@@ -53,40 +53,48 @@ def get_url_predictor():
 
 def analyze_text_ml(text: str) -> Dict[str, Any]:
     """
-    Run text inference using the trained TF-IDF + Logistic Regression model.
-    Returns dictionary with prediction, probability, spam_probability, model name, version.
+    Run text inference using the Phase 04 Calibrated LinearSVC pipeline.
+    Returns dictionary with prediction, model_score, model_probability, spam_probability, model version.
     """
     try:
-        predictor = get_text_predictor()
-        return predictor(text)
+        from app.ml.message_inference import predict_message_threat
+        res = predict_message_threat(text)
+        res["spam_probability"] = res.get("model_probability", 0.0)
+        res["probability"] = res.get("model_score", 0.0)
+        res["model"] = "TF-IDF + Calibrated LinearSVC"
+        return res
     except Exception as e:
         logger.warning(f"ML text prediction fallback triggered: {e}")
         return {
             "prediction": "unavailable",
             "probability": 0.0,
             "spam_probability": 0.0,
+            "model_score": 0.0,
+            "model_probability": 0.0,
             "model": "Text ML Model (Offline/Error)",
-            "model_version": "1.0.0",
+            "model_version": "message-model-1.0",
+            "available": False,
             "error": str(e),
         }
 
 
 def analyze_url_ml(url: str) -> Dict[str, Any]:
     """
-    Run URL inference using the trained Random Forest classifier.
-    Returns dictionary with prediction, probability, malicious_probability, model name, version.
+    Run URL inference using the Phase 03 Random Forest classifier pipeline.
+    Returns dictionary with prediction, model_score, model_probability, model version, and features.
     """
     try:
-        predictor = get_url_predictor()
-        return predictor(url)
+        from app.ml.inference import predict_url_threat
+        return predict_url_threat(url)
     except Exception as e:
         logger.warning(f"ML URL prediction fallback triggered: {e}")
         return {
             "prediction": "unavailable",
-            "probability": 0.0,
-            "malicious_probability": 0.0,
-            "model": "URL ML Model (Offline/Error)",
-            "model_version": "1.0.0",
+            "model_score": 0.0,
+            "model_probability": 0.0,
+            "model_version": "url-model-1.0",
             "features_used": 0,
+            "available": False,
             "error": str(e),
         }
+

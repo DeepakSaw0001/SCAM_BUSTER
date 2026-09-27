@@ -1,4 +1,5 @@
 import logging
+import re
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from app.config.settings import settings
 
@@ -13,6 +14,11 @@ class MongoDB:
 db = MongoDB()
 
 
+def _mask_mongo_uri(uri: str) -> str:
+    """Mask credentials in MongoDB connection string for safe logging."""
+    return re.sub(r"://([^:]+):([^@]+)@", r"://\1:****@", uri)
+
+
 async def connect_to_mongo():
     """Establish async MongoDB connection."""
     if not settings.DATABASE_URL:
@@ -21,13 +27,18 @@ async def connect_to_mongo():
     try:
         client = AsyncIOMotorClient(
             settings.DATABASE_URL,
-            serverSelectionTimeoutMS=2000,
+            serverSelectionTimeoutMS=5000,
         )
         # Verify connection
         await client.admin.command("ping")
         db.client = client
         db.database = client[settings.DATABASE_NAME]
-        logger.info("[DB] Connected to MongoDB at %s (Database: %s)", settings.DATABASE_URL, settings.DATABASE_NAME)
+        safe_uri = _mask_mongo_uri(settings.DATABASE_URL)
+        logger.info("[DB] Connected to MongoDB at %s (Database: %s)", safe_uri, settings.DATABASE_NAME)
+
+        # Initialize collections & indexes
+        from app.database.indexes import ensure_database_indexes
+        await ensure_database_indexes(db.database)
     except Exception as e:
         db.client = None
         db.database = None

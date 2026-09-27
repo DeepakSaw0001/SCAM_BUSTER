@@ -1,0 +1,43 @@
+{
+  "model_name": "email_classifier",
+  "model_version": "email-model-1.0",
+  "algorithm": "CalibratedLinearSVC",
+  "feature_version": "1.0",
+  "vectorizer": "TfidfVectorizer",
+  "tfidf_params": {
+    "ngram_range": [
+      1,
+      2
+    ],
+    "min_df": 2,
+    "max_df": 0.9,
+    "sublinear_tf": true,
+    "max_features": 8000,
+    "strip_accents": "unicode",
+    "stop_words": "english"
+  },
+  "vocabulary_size": 8000,
+  "training_dataset": "Apache SpamAssassin Public Corpus (Cleaned)",
+  "dataset_samples": 1926,
+  "class_distribution": {
+    "ham": 1455,
+    "spam_phishing": 471
+  },
+  "evaluation_metrics": {
+    "accuracy": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1_score": 1.0,
+    "roc_auc": 1.0,
+    "false_positive_rate": 0.0,
+    "false_negative_rate": 0.0,
+    "confusion_matrix": {
+      "true_negatives": 218,
+      "false_positives": 0,
+      "false_negatives": 0,
+      "true_positives": 71
+    }
+  },
+  "trained_at": "2026-09-26T06:13:05.275806+00:00",
+  "random_state": 42
+}

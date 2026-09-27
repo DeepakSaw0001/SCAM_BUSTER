@@ -137,3 +137,47 @@ def extract_url_features(url: str, normalized: Optional[NormalizedUrlResult] = N
         digit_ratio=round(digit_ratio, 4),
         entropy=round(_calculate_entropy(target), 4),
     )
+
+
+URL_FEATURE_NAMES = [
+    "url_length",
+    "hostname_length",
+    "path_length",
+    "query_length",
+    "fragment_length",
+    "number_of_dots",
+    "number_of_hyphens",
+    "number_of_digits",
+    "number_of_special_characters",
+    "number_of_slashes",
+    "number_of_question_marks",
+    "number_of_equals",
+    "subdomain_count",
+    "path_depth",
+    "query_parameter_count",
+    "has_ip_hostname",
+    "has_port",
+    "uses_https",
+    "suspicious_keyword_count",
+    "has_at_symbol",
+    "has_double_slash_redirect",
+    "digit_ratio",
+    "entropy",
+]
+
+
+def extract_feature_dict(url: str, normalized: Optional[NormalizedUrlResult] = None) -> Dict[str, float]:
+    """Return dictionary of numerical / boolean features matching URL_FEATURE_NAMES."""
+    feats = extract_url_features(url, normalized)
+    d = feats.model_dump()
+    return {
+        name: float(1.0 if d[name] is True else (0.0 if d[name] is False else d[name]))
+        for name in URL_FEATURE_NAMES
+    }
+
+
+def extract_feature_vector(url: str, normalized: Optional[NormalizedUrlResult] = None) -> List[float]:
+    """Return ordered numerical vector in URL_FEATURE_NAMES order."""
+    f_dict = extract_feature_dict(url, normalized)
+    return [f_dict[name] for name in URL_FEATURE_NAMES]
+

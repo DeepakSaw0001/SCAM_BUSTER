@@ -1,14 +1,70 @@
-from app.risk_engine.scorer import calculate_risk_score, MODEL_VERSION
-from app.risk_engine.categories import determine_categories
-from app.risk_engine.explanations import generate_summary, generate_recommendation, generate_reasons
+from app.risk_engine.scorer import (
+    calculate_risk_score,
+    calculate_unified_url_risk,
+    calculate_message_rule_score,
+    calculate_unified_message_risk,
+    calculate_email_rule_score,
+    calculate_unified_email_risk,
+    calculate_unified_phone_risk,
+    calculate_unified_apk_risk,
+    MODEL_VERSION,
+)
+from app.risk_engine.categories import (
+    determine_categories,
+    determine_message_categories,
+    determine_email_categories,
+    determine_phone_categories,
+    determine_apk_categories,
+)
+from app.risk_engine.explanations import (
+    generate_summary,
+    generate_recommendation,
+    generate_reasons,
+    generate_message_summary,
+    generate_message_recommendation,
+    generate_message_reasons,
+    generate_email_summary,
+    generate_email_recommendation,
+    generate_email_reasons,
+    generate_phone_summary,
+    generate_phone_recommendation,
+    generate_phone_reasons,
+    generate_apk_summary,
+    generate_apk_recommendation,
+    generate_apk_reasons,
+)
 from app.risk_engine.engine import fuse_risk_analysis
 
 __all__ = [
     "calculate_risk_score",
+    "calculate_unified_url_risk",
+    "calculate_message_rule_score",
+    "calculate_unified_message_risk",
+    "calculate_email_rule_score",
+    "calculate_unified_email_risk",
+    "calculate_unified_phone_risk",
+    "calculate_unified_apk_risk",
     "MODEL_VERSION",
     "determine_categories",
+    "determine_message_categories",
+    "determine_email_categories",
+    "determine_phone_categories",
+    "determine_apk_categories",
     "generate_summary",
     "generate_recommendation",
     "generate_reasons",
+    "generate_message_summary",
+    "generate_message_recommendation",
+    "generate_message_reasons",
+    "generate_email_summary",
+    "generate_email_recommendation",
+    "generate_email_reasons",
+    "generate_phone_summary",
+    "generate_phone_recommendation",
+    "generate_phone_reasons",
+    "generate_apk_summary",
+    "generate_apk_recommendation",
+    "generate_apk_reasons",
     "fuse_risk_analysis",
 ]
+

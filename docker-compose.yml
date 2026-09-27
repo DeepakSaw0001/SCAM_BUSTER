@@ -1,3 +1,5 @@
+version: "3.8"
+
 services:
   mongodb:
     image: mongo:7.0
@@ -21,10 +23,12 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - APP_ENV=development
+      - APP_ENV=production
       - DATABASE_URL=mongodb://mongodb:27017
       - DATABASE_NAME=scambuster
-      - CORS_ORIGINS=["http://localhost:5173","http://127.0.0.1:5173"]
+      - CORS_ORIGINS=["http://localhost:5173","http://127.0.0.1:5173","http://localhost:3000","http://localhost"]
+      - JWT_SECRET=scambuster-super-secret-production-jwt-key-2026
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-AQ.Ab8RN6J4-KjiJL5PiTEHk8YlEl081T-KHS2SPy_IiVzZXDf9VQ}
     depends_on:
       - mongodb
     networks:

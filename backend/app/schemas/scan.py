@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional, Union
 from pydantic import BaseModel, Field, model_validator
 
 
@@ -7,29 +7,69 @@ from pydantic import BaseModel, Field, model_validator
 
 class UrlScanRequest(BaseModel):
     url: str = Field(..., min_length=3, max_length=2048, description="URL to analyze")
+    deep_analysis: Optional[bool] = Field(True, description="Enable live safe web fetch, redirect chain, and download inspection")
+
+
+class MessageScanRequest(BaseModel):
+    message: str = Field(..., min_length=1, max_length=5000, description="SMS or message text to analyze")
+    sender: Optional[str] = Field(None, max_length=128, description="Optional sender info or phone number")
+
+    @model_validator(mode="before")
+    @classmethod
+    def validate_content(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            if "message" not in data and "text" in data:
+                data["message"] = data["text"]
+            if "message" in data and isinstance(data["message"], str):
+                if not data["message"].strip():
+                    raise ValueError("Message content cannot be empty or pure whitespace.")
+        return data
 
 
 class TextScanRequest(BaseModel):
-    text: str = Field(..., min_length=2, max_length=10000, description="SMS or message text to analyze")
+    text: str = Field(..., min_length=1, max_length=10000, description="SMS or message text to analyze")
     sender: Optional[str] = Field(None, max_length=128, description="Optional sender info or phone number")
 
 
 class EmailScanRequest(BaseModel):
-    subject: str = Field("", max_length=512, description="Email subject line")
-    sender: str = Field(..., min_length=3, max_length=256, description="From email address / display name")
-    body: str = Field(..., min_length=1, max_length=50000, description="Email body content")
+    raw_email: Optional[str] = Field(None, max_length=200000, description="Raw RFC-822 / MIME email text")
+    subject: Optional[str] = Field("", max_length=512, description="Email subject line")
+    sender: Optional[str] = Field(None, max_length=256, description="From email address / display name")
+    body: Optional[str] = Field(None, max_length=100000, description="Email body content")
     reply_to: Optional[str] = Field(None, max_length=256, description="Reply-To header")
     attachments: Optional[List[str]] = Field(default_factory=list, description="List of attachment filenames")
+
+    @model_validator(mode="before")
+    @classmethod
+    def validate_email_input(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            raw = data.get("raw_email")
+            body = data.get("body")
+            sender = data.get("sender")
+
+            if raw is not None:
+                if not isinstance(raw, str) or not raw.strip():
+                    raise ValueError("Raw email content cannot be empty or pure whitespace.")
+            elif body is not None or sender is not None:
+                if not sender or not isinstance(sender, str) or not sender.strip():
+                    raise ValueError("Sender email address is required when providing structured email fields.")
+                if not body or not isinstance(body, str) or not body.strip():
+                    raise ValueError("Email body content is required when providing structured email fields.")
+            else:
+                raise ValueError("Must provide either 'raw_email' or structured 'sender' and 'body' fields.")
+        return data
 
 
 class PhoneScanRequest(BaseModel):
     phone_number: str = Field(..., min_length=3, max_length=32, description="Phone number to check")
+    country: Optional[str] = Field("IN", max_length=8, description="Default country or region code (e.g. IN, US, GB)")
     context: Optional[str] = Field(None, max_length=512, description="Optional caller context or claimed organization")
 
 
 class ApkScanRequest(BaseModel):
     package_name: str = Field(..., min_length=3, max_length=256, description="App package name e.g. com.example.app")
     app_name: Optional[str] = Field(None, max_length=128, description="Human readable application name")
+    category: Optional[str] = Field(None, max_length=64, description="Declared or apparent app category e.g. calculator, camera, messaging, utility")
     permissions: List[str] = Field(..., min_length=1, description="List of Android permissions requested by APK")
 
 
@@ -43,20 +83,56 @@ class ThreatIndicator(BaseModel):
     rule_id: Optional[str] = None
 
 
+class RuleDetectionDetails(BaseModel):
+    risk_score: int = Field(..., ge=0, le=100)
+    indicators: List[ThreatIndicator] = Field(default_factory=list)
+
+
+class MLDetectionDetails(BaseModel):
+    prediction: str
+    model_score: float
+    model_version: str
+    model_probability: Optional[float] = None
+    features_used: Optional[int] = None
+    top_contributing_features: Optional[List[Dict[str, Any]]] = None
+
+
+class DetectionSources(BaseModel):
+    rules: RuleDetectionDetails
+    ml: Optional[MLDetectionDetails] = None
+    embedded_urls: Optional[List[Dict[str, Any]]] = None
+    headers: Optional[Dict[str, Any]] = None
+    attachments: Optional[List[Dict[str, Any]]] = None
+    intelligence: Optional[Dict[str, Any]] = None
+    permissions: Optional[Dict[str, Any]] = None
+    certificate: Optional[Dict[str, Any]] = None
+    components: Optional[Dict[str, Any]] = None
+    privacy: Optional[Dict[str, Any]] = None
+    web: Optional[Dict[str, Any]] = None
+    social_engineering: Optional[Dict[str, Any]] = None
+
+
 class MLMetadata(BaseModel):
+    learning_type: Optional[str] = None
+    category: Optional[str] = None
+    algorithm: Optional[str] = None
+    features_used: Optional[Union[List[str], int, Any]] = None
+    confidence: Optional[float] = None
+    is_deterministic: Optional[bool] = None
+
+    # Backwards compatibility and additional model provenance
     model_name: Optional[str] = None
     model_version: Optional[str] = None
     prediction: Optional[str] = None
     probability: Optional[float] = None
     target_probability: Optional[float] = None
-    features_used: Optional[int] = None
     details: Optional[Dict[str, Any]] = None
 
 
 class ScanResultResponse(BaseModel):
-    # Common identification
     id: str
     scan_id: Optional[str] = None
+    user_id: Optional[str] = None
     scan_type: str = "url"
     input_type: Optional[str] = None
     status: str = "completed"
@@ -87,8 +163,14 @@ class ScanResultResponse(BaseModel):
     model_version: str = "rules-v1"
     normalized_url: Optional[str] = None
     features: Optional[Dict[str, Any]] = None
+    detection: Optional[DetectionSources] = None
     ml_metadata: Optional[MLMetadata] = None
     technical_details: Optional[Dict[str, Any]] = None
+    privacy_analysis: Optional[Dict[str, Any]] = None
+    web_analysis: Optional[Dict[str, Any]] = None
+    social_engineering: Optional[Dict[str, Any]] = None
+    threat_intelligence: Optional[Dict[str, Any]] = None
+    threat_graph: Optional[Dict[str, Any]] = None
 
     @model_validator(mode="before")
     @classmethod
@@ -131,6 +213,7 @@ class ScanResultResponse(BaseModel):
 class ScanHistoryItem(BaseModel):
     id: str
     scan_id: Optional[str] = None
+    user_id: Optional[str] = None
     scan_type: str
     target: str
     timestamp: datetime

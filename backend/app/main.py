@@ -28,9 +28,20 @@ async def lifespan(app: FastAPI):
     await connect_to_mongo()
     # Pre-warm ML models so first request is instant
     try:
-        from app.ml.client import get_text_predictor, get_url_predictor
-        get_text_predictor()
-        get_url_predictor()
+        from app.ml.inference import get_model_manager
+        from app.ml.message_inference import get_message_model_manager
+        from app.ml.email_inference import EmailModelManager
+        from app.ml.phone_inference import PhoneModelManager
+        from app.ml.apk_inference import ApkModelManager
+        from app.ml.apk_privacy_inference import ApkPrivacyModelManager
+        from app.ml.web_inference import WebRiskModelManager
+        get_model_manager()
+        get_message_model_manager()
+        EmailModelManager.get_instance()
+        PhoneModelManager.get_instance()
+        ApkModelManager.get_instance()
+        ApkPrivacyModelManager.get_instance()
+        WebRiskModelManager.get_instance()
     except Exception:
         pass
     yield
@@ -69,23 +80,25 @@ def create_application() -> FastAPI:
     # Root ML Service Compatibility Routes (for ml/test_api_client.py and standalone clients)
     @application.get("/health", tags=["ml"])
     async def ml_health():
-        text_model_ok = (MODELS_DIR / "text_classifier.joblib").exists()
-        url_model_ok = (MODELS_DIR / "url_classifier.joblib").exists()
+        url_v1_ok = (MODELS_DIR / "url_model_v1.joblib").exists() or (Path(__file__).resolve().parent / "ml" / "models" / "url_model_v1.joblib").exists()
+        msg_v1_ok = (MODELS_DIR / "message_model_v1.joblib").exists() or (Path(__file__).resolve().parent / "ml" / "models" / "message_model_v1.joblib").exists()
 
         return {
-            "status": "healthy" if (text_model_ok and url_model_ok) else "degraded",
+            "status": "healthy" if (url_v1_ok and msg_v1_ok) else "degraded",
             "service": "ScamBuster ML Service",
             "version": "1.0.0",
             "models": {
-                "text_classifier": {
-                    "available": text_model_ok,
-                    "artifact": "text_classifier.joblib",
-                    "algorithm": "TF-IDF + Logistic Regression",
-                },
                 "url_classifier": {
-                    "available": url_model_ok,
-                    "artifact": "url_classifier.joblib",
-                    "algorithm": "URL Features + Random Forest",
+                    "available": url_v1_ok,
+                    "artifact": "url_model_v1.joblib",
+                    "version": "url-model-1.0",
+                    "algorithm": "RandomForestClassifier",
+                },
+                "message_classifier": {
+                    "available": msg_v1_ok,
+                    "artifact": "message_model_v1.joblib",
+                    "version": "message-model-1.0",
+                    "algorithm": "TF-IDF + Calibrated LinearSVC",
                 },
             },
             "timestamp": datetime.now(timezone.utc).isoformat(),

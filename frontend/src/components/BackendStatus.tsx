@@ -5,7 +5,7 @@ export const BackendStatus: React.FC = () => {
   const { status, refresh } = useBackendHealth();
 
   return (
-    <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full text-xs font-medium border bg-dark-900 border-slate-800 shadow-sm">
+    <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full text-xs font-medium border bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
       <span className="relative flex h-2 w-2">
         {status === 'loading' && (
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
@@ -24,15 +24,15 @@ export const BackendStatus: React.FC = () => {
         ></span>
       </span>
 
-      <span className="text-slate-300">
+      <span className="text-slate-600 dark:text-slate-300">
         Backend Status:{' '}
         <strong
           className={
             status === 'loading'
-              ? 'text-amber-400'
+              ? 'text-amber-500 dark:text-amber-400'
               : status === 'connected'
-              ? 'text-emerald-400 font-semibold'
-              : 'text-rose-400 font-semibold'
+              ? 'text-emerald-600 dark:text-emerald-400 font-semibold'
+              : 'text-rose-600 dark:text-rose-400 font-semibold'
           }
         >
           {status === 'loading' && 'Checking...'}
@@ -43,7 +43,7 @@ export const BackendStatus: React.FC = () => {
 
       <button
         onClick={refresh}
-        className="ml-1 text-slate-500 hover:text-slate-300 transition-colors"
+        className="ml-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
         title="Check connection again"
         type="button"
       >

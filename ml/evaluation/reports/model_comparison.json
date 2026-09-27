@@ -1,0 +1,133 @@
+{
+  "task": "URL Phishing & Malicious Classification",
+  "evaluated_at": "2026-09-25T16:47:47.177786+00:00",
+  "random_state": 42,
+  "dataset": {
+    "path": "D:\\vibe_coding\\SCAM_BUSTER\\ml\\datasets\\processed\\url_dataset_clean.csv",
+    "total_samples": 3600,
+    "train_samples": 2520,
+    "val_samples": 540,
+    "test_samples": 540
+  },
+  "models": {
+    "LogisticRegression": {
+      "params": {
+        "C": 1.0,
+        "max_iter": 1000,
+        "class_weight": "balanced",
+        "random_state": 42
+      },
+      "validation_metrics": {
+        "accuracy": 0.9907,
+        "precision": 0.9963,
+        "recall": 0.9852,
+        "f1_score": 0.9907,
+        "roc_auc": 0.9996,
+        "false_positive_rate": 0.0037,
+        "false_negative_rate": 0.0148,
+        "confusion_matrix": {
+          "true_negatives": 269,
+          "false_positives": 1,
+          "false_negatives": 4,
+          "true_positives": 266
+        }
+      },
+      "test_metrics": {
+        "accuracy": 0.9926,
+        "precision": 0.9963,
+        "recall": 0.9889,
+        "f1_score": 0.9926,
+        "roc_auc": 0.9998,
+        "false_positive_rate": 0.0037,
+        "false_negative_rate": 0.0111,
+        "confusion_matrix": {
+          "true_negatives": 269,
+          "false_positives": 1,
+          "false_negatives": 3,
+          "true_positives": 267
+        }
+      }
+    },
+    "RandomForestClassifier": {
+      "params": {
+        "n_estimators": 100,
+        "max_depth": 15,
+        "min_samples_split": 4,
+        "min_samples_leaf": 2,
+        "class_weight": "balanced",
+        "random_state": 42,
+        "n_jobs": -1
+      },
+      "validation_metrics": {
+        "accuracy": 0.9944,
+        "precision": 1.0,
+        "recall": 0.9889,
+        "f1_score": 0.9944,
+        "roc_auc": 0.9997,
+        "false_positive_rate": 0.0,
+        "false_negative_rate": 0.0111,
+        "confusion_matrix": {
+          "true_negatives": 270,
+          "false_positives": 0,
+          "false_negatives": 3,
+          "true_positives": 267
+        }
+      },
+      "test_metrics": {
+        "accuracy": 0.9963,
+        "precision": 1.0,
+        "recall": 0.9926,
+        "f1_score": 0.9963,
+        "roc_auc": 0.9999,
+        "false_positive_rate": 0.0,
+        "false_negative_rate": 0.0074,
+        "confusion_matrix": {
+          "true_negatives": 270,
+          "false_positives": 0,
+          "false_negatives": 2,
+          "true_positives": 268
+        }
+      },
+      "top_features": [
+        [
+          "path_length",
+          0.228
+        ],
+        [
+          "path_depth",
+          0.1812
+        ],
+        [
+          "number_of_dots",
+          0.1418
+        ],
+        [
+          "url_length",
+          0.1119
+        ],
+        [
+          "digit_ratio",
+          0.0844
+        ],
+        [
+          "number_of_digits",
+          0.0693
+        ],
+        [
+          "uses_https",
+          0.0611
+        ],
+        [
+          "hostname_length",
+          0.0279
+        ]
+      ]
+    }
+  },
+  "selected_model": {
+    "name": "RandomForestClassifier",
+    "model_version": "url-model-1.0",
+    "artifact": "url_model_v1.joblib",
+    "rationale": "Selected based on empirical evaluation on held-out test data showing superior F1-score and low False Positive Rate."
+  }
+}

@@ -12,20 +12,20 @@ export const Scan: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto py-10 px-4">
-      <h1 className="text-3xl font-bold text-white mb-2">Threat Scanner Hub</h1>
-      <p className="text-slate-400 mb-8">Select a vector to analyze or verify threat indicators.</p>
+      <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">Threat Scanner Hub</h1>
+      <p className="text-slate-500 dark:text-slate-400 mb-8">Select a vector to analyze or verify threat indicators.</p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {scanners.map((s) => (
           <Link
             key={s.path}
             to={s.path}
-            className="p-6 rounded-xl bg-dark-900 border border-slate-800 hover:border-brand-500/50 transition flex items-start gap-4"
+            className="p-6 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:border-brand-500/50 dark:hover:border-brand-500/50 transition flex items-start gap-4 group"
           >
-            <div className="text-3xl p-2 rounded-lg bg-dark-950 border border-slate-800">{s.icon}</div>
+            <div className="text-3xl p-2 rounded-lg bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">{s.icon}</div>
             <div>
-              <h2 className="text-lg font-semibold text-white">{s.title}</h2>
-              <p className="text-sm text-slate-400 mt-1">{s.desc}</p>
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-400 transition">{s.title}</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{s.desc}</p>
             </div>
           </Link>
         ))}

@@ -1,0 +1,116 @@
+{
+  "model_name": "apk_privacy_classifier",
+  "version": "1.0",
+  "algorithm": "LogisticRegression",
+  "feature_version": "privacy-feature-v1",
+  "feature_count": 16,
+  "target_labels": [
+    "low",
+    "medium",
+    "high",
+    "critical"
+  ],
+  "training_dataset": "apk_privacy_corpus.csv",
+  "sample_count": 2400,
+  "test_sample_count": 480,
+  "metrics": {
+    "accuracy": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1_score": 1.0,
+    "confusion_matrix": [
+      [
+        140,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        150,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        120,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        70
+      ]
+    ]
+  },
+  "all_model_comparison": {
+    "LogisticRegression": {
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "confusion_matrix": [
+        [
+          140,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          150,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          120,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          70
+        ]
+      ]
+    },
+    "RandomForest": {
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "confusion_matrix": [
+        [
+          140,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          150,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          120,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          70
+        ]
+      ]
+    }
+  },
+  "trained_at": "2026-09-26T07:48:19.642200+00:00",
+  "random_seed": 42
+}
