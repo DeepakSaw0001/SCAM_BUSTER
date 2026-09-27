@@ -67,6 +67,15 @@ def create_application() -> FastAPI:
     # Routers
     application.include_router(api_router, prefix=settings.API_V1_PREFIX)
 
+    @application.get("/ping", tags=["health"], summary="Keep-alive ping endpoint for cron jobs")
+    @application.head("/ping", include_in_schema=False)
+    async def ping():
+        return {
+            "status": "ok",
+            "message": "pong",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+
     @application.get("/", tags=["root"])
     async def root():
         return {
@@ -74,6 +83,7 @@ def create_application() -> FastAPI:
             "status": "online",
             "version": "1.0.0",
             "docs": "/docs",
+            "ping": "/ping",
             "health": f"{settings.API_V1_PREFIX}/health",
         }
 
