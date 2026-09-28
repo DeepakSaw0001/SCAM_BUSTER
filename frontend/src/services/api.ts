@@ -335,6 +335,24 @@ export function normalizeScanResult(raw: any): ScanResult {
   return normalized;
 }
 
+async function safeFetch(url: string, init?: RequestInit): Promise<Response> {
+  try {
+    return await fetch(url, init);
+  } catch (err: any) {
+    const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
+    const isLocalApi = url.includes('localhost') || url.includes('127.0.0.1');
+
+    if (isHttps && isLocalApi) {
+      throw new Error(
+        `Failed to fetch (Mixed Content): Your frontend is running on HTTPS, but trying to reach local HTTP API (${url}). Please host your backend with HTTPS and set VITE_API_URL in your hosting settings.`
+      );
+    }
+    throw new Error(
+      `Failed to connect to backend (${url}). Please verify that your backend server is deployed and running, CORS allows this origin, and VITE_API_URL is configured.`
+    );
+  }
+}
+
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const token = getStoredAuthToken();
   const authHeaders: Record<string, string> = token ? { 'Authorization': `Bearer ${token}` } : {};
@@ -349,7 +367,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     headers['Content-Type'] = 'application/json';
   }
 
-  const response = await fetch(`${API_BASE}${endpoint}`, {
+  const response = await safeFetch(`${API_BASE}${endpoint}`, {
     ...options,
     headers,
   });
@@ -357,6 +375,17 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   if (!response.ok) {
     const errorBody = await response.json().catch(() => ({}));
     throw new Error(errorBody.detail || `Request failed with HTTP status ${response.status}`);
+  }
+
+  const contentType = response.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    const textBody = await response.text().catch(() => '');
+    if (textBody.trim().startsWith('<!DOCTYPE') || textBody.trim().startsWith('<html')) {
+      throw new Error(
+        `Received HTML instead of JSON from API. Your frontend is deployed, but VITE_API_URL is not set. Please set VITE_API_URL in your hosting environment variables to your backend URL.`
+      );
+    }
+    throw new Error(`Unexpected non-JSON response from server: ${textBody.slice(0, 100)}`);
   }
 
   const rawJson = await response.json();
@@ -413,7 +442,7 @@ export async function uploadEmail(file: File): Promise<ScanResult> {
   const headers: Record<string, string> = token ? { 'Authorization': `Bearer ${token}` } : {};
   const formData = new FormData();
   formData.append('file', file);
-  const response = await fetch(`${API_BASE}/scan/email/upload`, {
+  const response = await safeFetch(`${API_BASE}/scan/email/upload`, {
     method: 'POST',
     headers,
     body: formData,
@@ -456,7 +485,7 @@ export async function uploadApk(file: File, category?: string): Promise<ScanResu
   if (category) {
     formData.append('category', category);
   }
-  const response = await fetch(`${API_BASE}/scan/apk/upload`, {
+  const response = await safeFetch(`${API_BASE}/scan/apk/upload`, {
     method: 'POST',
     headers,
     body: formData,
